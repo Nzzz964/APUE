@@ -32,8 +32,7 @@ int main(int argc, char *argv[])
 
     if (ret < 0)
     {
-        printf("%ld\n", errno);
-        RETERR("Permission deny");
+        printf("Message : %s\n", strerror(errno));
         return 1;
     }
 
