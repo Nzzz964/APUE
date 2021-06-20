@@ -34,8 +34,11 @@ int main(int argc, char *argv, char *envp[])
     //打印环境变量
     for (int i = 0; envp[i] != NULL; i++)
     {
-        printf("%s\n", envp[i]);
+        // printf("%s\n", envp[i]);
     }
+    //获取环境变量
+    char *env = getenv("HOME");
+    printf("%s\n", env);
     //注册终止处理程序
     atexit(my_exit);
     return 0;
