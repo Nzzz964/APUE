@@ -18,5 +18,7 @@ int main(void)
     }
 
     for (i = 9; i >= 0; --i)
+    {
         waitpid(pids[i], NULL, 0);
+    }
 }
