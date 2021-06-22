@@ -5,19 +5,18 @@
 #include <stropts.h>
 #endif
 
-int
-ptym_open(char *pts_name, int pts_namesz)
+int ptym_open(char *pts_name, int pts_namesz)
 {
-	char	*ptr;
-	int		fdm, err;
+	char *ptr;
+	int fdm, err;
 
 	if ((fdm = posix_openpt(O_RDWR)) < 0)
-		return(-1);
-	if (grantpt(fdm) < 0)		/* grant access to slave */
+		return (-1);
+	if (grantpt(fdm) < 0) /* grant access to slave */
 		goto errout;
-	if (unlockpt(fdm) < 0)		/* clear slave's lock flag */
+	if (unlockpt(fdm) < 0) /* clear slave's lock flag */
 		goto errout;
-	if ((ptr = ptsname(fdm)) == NULL)	/* get slave's name */
+	if ((ptr = ptsname(fdm)) == NULL) /* get slave's name */
 		goto errout;
 
 	/*
@@ -26,16 +25,15 @@ ptym_open(char *pts_name, int pts_namesz)
 	 */
 	strncpy(pts_name, ptr, pts_namesz);
 	pts_name[pts_namesz - 1] = '\0';
-	return(fdm);			/* return fd of master */
+	return (fdm); /* return fd of master */
 errout:
 	err = errno;
 	close(fdm);
 	errno = err;
-	return(-1);
+	return (-1);
 }
 
-int
-ptys_open(char *pts_name)
+int ptys_open(char *pts_name)
 {
 	int fds;
 #if defined(SOLARIS)
@@ -43,7 +41,7 @@ ptys_open(char *pts_name)
 #endif
 
 	if ((fds = open(pts_name, O_RDWR)) < 0)
-		return(-1);
+		return (-1);
 
 #if defined(SOLARIS)
 	/*
@@ -52,19 +50,21 @@ ptys_open(char *pts_name)
 	if ((setup = ioctl(fds, I_FIND, "ldterm")) < 0)
 		goto errout;
 
-	if (setup == 0) {
+	if (setup == 0)
+	{
 		if (ioctl(fds, I_PUSH, "ptem") < 0)
 			goto errout;
 		if (ioctl(fds, I_PUSH, "ldterm") < 0)
 			goto errout;
-		if (ioctl(fds, I_PUSH, "ttcompat") < 0) {
-errout:
+		if (ioctl(fds, I_PUSH, "ttcompat") < 0)
+		{
+		errout:
 			err = errno;
 			close(fds);
 			errno = err;
-			return(-1);
+			return (-1);
 		}
 	}
 #endif
-	return(fds);
+	return (fds);
 }

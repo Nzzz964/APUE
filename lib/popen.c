@@ -6,55 +6,66 @@
 /*
  * Pointer to array allocated at run-time.
  */
-static pid_t	*childpid = NULL;
+static pid_t *childpid = NULL;
 
 /*
  * From our open_max(), {Prog openmax}.
  */
-static int		maxfd;
+static int maxfd;
 
 FILE *
 popen(const char *cmdstring, const char *type)
 {
-	int		i;
-	int		pfd[2];
-	pid_t	pid;
-	FILE	*fp;
+	int i;
+	int pfd[2];
+	pid_t pid;
+	FILE *fp;
 
 	/* only allow "r" or "w" */
-	if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0) {
+	if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0)
+	{
 		errno = EINVAL;
-		return(NULL);
+		return (NULL);
 	}
 
-	if (childpid == NULL) {		/* first time through */
+	if (childpid == NULL)
+	{ /* first time through */
 		/* allocate zeroed out array for child pids */
 		maxfd = open_max();
 		if ((childpid = calloc(maxfd, sizeof(pid_t))) == NULL)
-			return(NULL);
+			return (NULL);
 	}
 
 	if (pipe(pfd) < 0)
-		return(NULL);	/* errno set by pipe() */
-	if (pfd[0] >= maxfd || pfd[1] >= maxfd) {
+		return (NULL); /* errno set by pipe() */
+	if (pfd[0] >= maxfd || pfd[1] >= maxfd)
+	{
 		close(pfd[0]);
 		close(pfd[1]);
 		errno = EMFILE;
-		return(NULL);
+		return (NULL);
 	}
 
-	if ((pid = fork()) < 0) {
-		return(NULL);	/* errno set by fork() */
-	} else if (pid == 0) {							/* child */
-		if (*type == 'r') {
+	if ((pid = fork()) < 0)
+	{
+		return (NULL); /* errno set by fork() */
+	}
+	else if (pid == 0)
+	{ /* child */
+		if (*type == 'r')
+		{
 			close(pfd[0]);
-			if (pfd[1] != STDOUT_FILENO) {
+			if (pfd[1] != STDOUT_FILENO)
+			{
 				dup2(pfd[1], STDOUT_FILENO);
 				close(pfd[1]);
 			}
-		} else {
+		}
+		else
+		{
 			close(pfd[1]);
-			if (pfd[0] != STDIN_FILENO) {
+			if (pfd[0] != STDIN_FILENO)
+			{
 				dup2(pfd[0], STDIN_FILENO);
 				close(pfd[0]);
 			}
@@ -70,48 +81,53 @@ popen(const char *cmdstring, const char *type)
 	}
 
 	/* parent continues... */
-	if (*type == 'r') {
+	if (*type == 'r')
+	{
 		close(pfd[1]);
 		if ((fp = fdopen(pfd[0], type)) == NULL)
-			return(NULL);
-	} else {
+			return (NULL);
+	}
+	else
+	{
 		close(pfd[0]);
 		if ((fp = fdopen(pfd[1], type)) == NULL)
-			return(NULL);
+			return (NULL);
 	}
 
-	childpid[fileno(fp)] = pid;	/* remember child pid for this fd */
-	return(fp);
+	childpid[fileno(fp)] = pid; /* remember child pid for this fd */
+	return (fp);
 }
 
-int
-pclose(FILE *fp)
+int pclose(FILE *fp)
 {
-	int		fd, stat;
-	pid_t	pid;
+	int fd, stat;
+	pid_t pid;
 
-	if (childpid == NULL) {
+	if (childpid == NULL)
+	{
 		errno = EINVAL;
-		return(-1);		/* popen() has never been called */
+		return (-1); /* popen() has never been called */
 	}
 
 	fd = fileno(fp);
-	if (fd >= maxfd) {
+	if (fd >= maxfd)
+	{
 		errno = EINVAL;
-		return(-1);		/* invalid file descriptor */
+		return (-1); /* invalid file descriptor */
 	}
-	if ((pid = childpid[fd]) == 0) {
+	if ((pid = childpid[fd]) == 0)
+	{
 		errno = EINVAL;
-		return(-1);		/* fp wasn't opened by popen() */
+		return (-1); /* fp wasn't opened by popen() */
 	}
 
 	childpid[fd] = 0;
 	if (fclose(fp) == EOF)
-		return(-1);
+		return (-1);
 
 	while (waitpid(pid, &stat, 0) < 0)
 		if (errno != EINTR)
-			return(-1);	/* error other than EINTR from waitpid() */
+			return (-1); /* error other than EINTR from waitpid() */
 
-	return(stat);	/* return child's termination status */
+	return (stat); /* return child's termination status */
 }

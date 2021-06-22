@@ -9,9 +9,9 @@ sig_alrm(int signo)
 unsigned int
 sleep(unsigned int seconds)
 {
-	struct sigaction	newact, oldact;
-	sigset_t			newmask, oldmask, suspmask;
-	unsigned int		unslept;
+	struct sigaction newact, oldact;
+	sigset_t newmask, oldmask, suspmask;
+	unsigned int unslept;
 
 	/* set our handler, save previous information */
 	newact.sa_handler = sig_alrm;
@@ -42,5 +42,5 @@ sleep(unsigned int seconds)
 
 	/* reset signal mask, which unblocks SIGALRM */
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-	return(unslept);
+	return (unslept);
 }

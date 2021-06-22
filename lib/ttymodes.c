@@ -2,23 +2,25 @@
 #include <termios.h>
 #include <errno.h>
 
-static struct termios		save_termios;
-static int					ttysavefd = -1;
-static enum { RESET, RAW, CBREAK }	ttystate = RESET;
+static struct termios save_termios;
+static int ttysavefd = -1;
+static enum { RESET,
+			  RAW,
+			  CBREAK } ttystate = RESET;
 
-int
-tty_cbreak(int fd)	/* put terminal into a cbreak mode */
+int tty_cbreak(int fd) /* put terminal into a cbreak mode */
 {
-	int				err;
-	struct termios	buf;
+	int err;
+	struct termios buf;
 
-	if (ttystate != RESET) {
+	if (ttystate != RESET)
+	{
 		errno = EINVAL;
-		return(-1);
+		return (-1);
 	}
 	if (tcgetattr(fd, &buf) < 0)
-		return(-1);
-	save_termios = buf;	/* structure copy */
+		return (-1);
+	save_termios = buf; /* structure copy */
 
 	/*
 	 * Echo off, canonical mode off.
@@ -31,47 +33,49 @@ tty_cbreak(int fd)	/* put terminal into a cbreak mode */
 	buf.c_cc[VMIN] = 1;
 	buf.c_cc[VTIME] = 0;
 	if (tcsetattr(fd, TCSAFLUSH, &buf) < 0)
-		return(-1);
+		return (-1);
 
 	/*
 	 * Verify that the changes stuck.  tcsetattr can return 0 on
 	 * partial success.
 	 */
-	if (tcgetattr(fd, &buf) < 0) {
+	if (tcgetattr(fd, &buf) < 0)
+	{
 		err = errno;
 		tcsetattr(fd, TCSAFLUSH, &save_termios);
 		errno = err;
-		return(-1);
+		return (-1);
 	}
 	if ((buf.c_lflag & (ECHO | ICANON)) || buf.c_cc[VMIN] != 1 ||
-	  buf.c_cc[VTIME] != 0) {
+		buf.c_cc[VTIME] != 0)
+	{
 		/*
 		 * Only some of the changes were made.  Restore the
 		 * original settings.
 		 */
 		tcsetattr(fd, TCSAFLUSH, &save_termios);
 		errno = EINVAL;
-		return(-1);
+		return (-1);
 	}
 
 	ttystate = CBREAK;
 	ttysavefd = fd;
-	return(0);
+	return (0);
 }
 
-int
-tty_raw(int fd)		/* put terminal into a raw mode */
+int tty_raw(int fd) /* put terminal into a raw mode */
 {
-	int				err;
-	struct termios	buf;
+	int err;
+	struct termios buf;
 
-	if (ttystate != RESET) {
+	if (ttystate != RESET)
+	{
 		errno = EINVAL;
-		return(-1);
+		return (-1);
 	}
 	if (tcgetattr(fd, &buf) < 0)
-		return(-1);
-	save_termios = buf;	/* structure copy */
+		return (-1);
+	save_termios = buf; /* structure copy */
 
 	/*
 	 * Echo off, canonical mode off, extended input
@@ -107,57 +111,57 @@ tty_raw(int fd)		/* put terminal into a raw mode */
 	buf.c_cc[VMIN] = 1;
 	buf.c_cc[VTIME] = 0;
 	if (tcsetattr(fd, TCSAFLUSH, &buf) < 0)
-		return(-1);
+		return (-1);
 
 	/*
 	 * Verify that the changes stuck.  tcsetattr can return 0 on
 	 * partial success.
 	 */
-	if (tcgetattr(fd, &buf) < 0) {
+	if (tcgetattr(fd, &buf) < 0)
+	{
 		err = errno;
 		tcsetattr(fd, TCSAFLUSH, &save_termios);
 		errno = err;
-		return(-1);
+		return (-1);
 	}
 	if ((buf.c_lflag & (ECHO | ICANON | IEXTEN | ISIG)) ||
-	  (buf.c_iflag & (BRKINT | ICRNL | INPCK | ISTRIP | IXON)) ||
-	  (buf.c_cflag & (CSIZE | PARENB | CS8)) != CS8 ||
-	  (buf.c_oflag & OPOST) || buf.c_cc[VMIN] != 1 ||
-	  buf.c_cc[VTIME] != 0) {
+		(buf.c_iflag & (BRKINT | ICRNL | INPCK | ISTRIP | IXON)) ||
+		(buf.c_cflag & (CSIZE | PARENB | CS8)) != CS8 ||
+		(buf.c_oflag & OPOST) || buf.c_cc[VMIN] != 1 ||
+		buf.c_cc[VTIME] != 0)
+	{
 		/*
 		 * Only some of the changes were made.  Restore the
 		 * original settings.
 		 */
 		tcsetattr(fd, TCSAFLUSH, &save_termios);
 		errno = EINVAL;
-		return(-1);
+		return (-1);
 	}
 
 	ttystate = RAW;
 	ttysavefd = fd;
-	return(0);
+	return (0);
 }
 
-int
-tty_reset(int fd)		/* restore terminal's mode */
+int tty_reset(int fd) /* restore terminal's mode */
 {
 	if (ttystate == RESET)
-		return(0);
+		return (0);
 	if (tcsetattr(fd, TCSAFLUSH, &save_termios) < 0)
-		return(-1);
+		return (-1);
 	ttystate = RESET;
-	return(0);
+	return (0);
 }
 
-void
-tty_atexit(void)		/* can be set up by atexit(tty_atexit) */
+void tty_atexit(void) /* can be set up by atexit(tty_atexit) */
 {
 	if (ttysavefd >= 0)
 		tty_reset(ttysavefd);
 }
 
 struct termios *
-tty_termios(void)		/* let caller see original tty state */
+tty_termios(void) /* let caller see original tty state */
 {
-	return(&save_termios);
+	return (&save_termios);
 }
