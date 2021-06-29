@@ -13,7 +13,7 @@ int main(void)
         if (pids[i] == 0)
         {
             sleep(i + 1);
-            _exit(0);
+            exit(0);
         }
     }
 
@@ -21,4 +21,5 @@ int main(void)
     {
         waitpid(pids[i], NULL, 0);
     }
+    pause();
 }
