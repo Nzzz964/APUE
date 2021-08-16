@@ -4,7 +4,7 @@
 int quitflag;
 sigset_t mask;
 
-//默认是私有锁 PTHREAD_PROCESS_PRIVATE 线程之间不干扰
+//默认是进程私有锁 PTHREAD_PROCESS_PRIVATE 进程之间不干扰
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t waitlock = PTHREAD_COND_INITIALIZER;
 
